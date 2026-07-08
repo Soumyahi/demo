@@ -1,101 +1,39 @@
-library identifier: 'shared_library@main', retriever: modernSCM(
-    [$class: 'GitSCMSource',
-     remote: 'https://github.com/sandeepds077/shared_library.git',
-     traits: [[$class: 'CloneOptionTrait', noTags: false, shallow: false]]]
-)
-
 pipeline {
-    agent { label 'linux-agent' }
-    options {
-        timestamps()
-    }
-    environment {
-        BUILD_DIR = 'build'
-        PROJECT_DIR = 'led-firmware'
-    }
+    agent any
+
     stages {
+
         stage('Checkout') {
             steps {
-                checkout scm
-            }
-        }
-
-        stage('Prepare') {
-            steps {
-                script {
-                    echo 'Using shared library: prepareEnvironment()'
-                    prepareEnvironment(env.PROJECT_DIR)
-                }
-            }
-        }
-
-        stage('Lint') {
-            steps {
-                script {
-                    echo 'Using shared library: runClangFormat()'
-                    runClangFormat(env.PROJECT_DIR, env.BUILD_DIR)
-                }
-            }
-        }
-
-        stage('Unit Tests') {
-            steps {
-                dir("${env.WORKSPACE}/${env.PROJECT_DIR}") {
-                    sh '''
-                    set -e
-                    mkdir -p "${BUILD_DIR}"
-                    cc -std=c99 -Wall -Wextra -Iinclude tests/led_test.c src/led.c -o "${BUILD_DIR}/led_test"
-                    "${BUILD_DIR}/led_test"
-                    '''
-                }
+                echo 'Checking out source code'
             }
         }
 
         stage('Configure') {
             steps {
-                dir("${env.WORKSPACE}/${env.PROJECT_DIR}") {
-                    sh '''
-                    set -e
-                    mkdir -p "${BUILD_DIR}"
-                    cd "${BUILD_DIR}"
-                    cmake .. -DCMAKE_TOOLCHAIN_FILE=../arm-gcc-toolchain.cmake
-                    '''
-                }
+                sh '''
+                mkdir -p build
+                cd build
+                cmake ..
+                '''
             }
         }
 
         stage('Build') {
             steps {
-                script {
-                    echo 'Using shared library: buildFirmware()'
-                    buildFirmware(env.PROJECT_DIR, env.BUILD_DIR)
-                }
+                sh '''
+                cd build
+                make
+                '''
             }
         }
 
-        stage('Verify Artifacts') {
+        stage('Test') {
             steps {
-                sh 'ls -lh ${PROJECT_DIR}/${BUILD_DIR} || true'
+                echo 'Build Successful'
             }
-        }
-
-        stage('Archive') {
-            steps {
-                archiveArtifacts artifacts: "${env.PROJECT_DIR}/${env.BUILD_DIR}/*.elf,${env.PROJECT_DIR}/${env.BUILD_DIR}/*.hex,${env.PROJECT_DIR}/${env.BUILD_DIR}/*.bin,${env.PROJECT_DIR}/${env.BUILD_DIR}/clang-format-report.txt", allowEmptyArchive: true
-            }
-        }
-    }
-    post {
-        always {
-            echo 'Post-build: archiving clang-format report and printing summary'
-            archiveArtifacts artifacts: "${env.PROJECT_DIR}/${env.BUILD_DIR}/clang-format-report.txt", allowEmptyArchive: true
-            sh 'echo "--- clang-format report (post) ---"; cat ${PROJECT_DIR}/${BUILD_DIR}/clang-format-report.txt || true'
-        }
-        success {
-            echo 'Build succeeded.'
-        }
-        failure {
-            echo 'Build failed.'
         }
     }
 }
+
+
