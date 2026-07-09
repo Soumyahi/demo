@@ -10,14 +10,16 @@ pipeline {
         }
 
         stage('Configure') {
-            steps {
-                sh '''
+    steps {
+        dir('led-firmware') {
+            sh '''
                 mkdir -p build
                 cd build
                 cmake ..
-                '''
-            }
+            '''
         }
+    }
+}
 
         stage('Build') {
             steps {
