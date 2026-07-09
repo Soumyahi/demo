@@ -22,18 +22,23 @@ pipeline {
 }
 
         stage('Build') {
-            steps {
-                sh '''
+    steps {
+        dir('led-firmware') {
+            sh '''
                 cd build
                 make
-                '''
-            }
+            '''
         }
+    }
+}
 
         stage('Test') {
-            steps {
-                echo 'Build Successful'
-            }
+    steps {
+        dir('led-firmware') {
+            sh '''
+                cd build
+                ctest
+            '''
         }
     }
 }
