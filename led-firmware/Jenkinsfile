@@ -1,48 +1,33 @@
+@Library('shared_library') _
+
 pipeline {
     agent any
 
     stages {
 
-        stage('Checkout') {
+        stage('Shared Library') {
             steps {
-                echo 'Checking out source code'
-            }
-        }
-
-        stage('Configure') {
-            steps {
-                dir('led-firmware') {
-                    sh '''
-                        mkdir -p build
-                        cd build
-                        cmake ..
-                    '''
+                script {
+                    sayHello()
                 }
             }
         }
 
-        stage('Build') {
+        stage('Create Artifacts') {
             steps {
-                dir('led-firmware') {
-                    sh '''
-                        cd build
-                        make
-                    '''
-                }
+                sh '''
+                echo "Firmware Binary" > firmware.bin
+                echo "Firmware ELF" > firmware.elf
+                echo "Firmware HEX" > firmware.hex
+                echo "Formatting Report" > clang-format-report.txt
+                '''
             }
         }
 
-        stage('Test') {
+        stage('Archive Artifacts') {
             steps {
-                dir('led-firmware') {
-                    sh '''
-                        cd build
-                        ctest
-                    '''
-                }
+                archiveArtifacts artifacts: '*.bin,*.elf,*.hex,*.txt', fingerprint: true
             }
         }
-
-    }   // closes stages
-
-}   // closes pipeline
+    }
+}
