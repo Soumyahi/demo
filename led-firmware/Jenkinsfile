@@ -10,37 +10,39 @@ pipeline {
         }
 
         stage('Configure') {
-    steps {
-        dir('led-firmware') {
-            sh '''
-                mkdir -p build
-                cd build
-                cmake ..
-            '''
+            steps {
+                dir('led-firmware') {
+                    sh '''
+                        mkdir -p build
+                        cd build
+                        cmake ..
+                    '''
+                }
+            }
         }
-    }
-}
 
         stage('Build') {
-    steps {
-        dir('led-firmware') {
-            sh '''
-                cd build
-                make
-            '''
+            steps {
+                dir('led-firmware') {
+                    sh '''
+                        cd build
+                        make
+                    '''
+                }
+            }
         }
-    }
-}
 
         stage('Test') {
-    steps {
-        dir('led-firmware') {
-            sh '''
-                cd build
-                ctest
-            '''
+            steps {
+                dir('led-firmware') {
+                    sh '''
+                        cd build
+                        ctest
+                    '''
+                }
+            }
         }
-    }
-}
 
+    }   // closes stages
 
+}   // closes pipeline
